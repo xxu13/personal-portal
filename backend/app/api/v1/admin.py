@@ -189,7 +189,7 @@ async def list_posts(
     """List all posts with filtering."""
     query = (
         select(Post)
-        .options(selectinload(Post.author), selectinload(Post.category))
+        .options(selectinload(Post.user), selectinload(Post.category))
         .order_by(Post.created_at.desc())
     )
     
@@ -203,7 +203,7 @@ async def list_posts(
     if status:
         query = query.where(Post.status == status)
     if author_id:
-        query = query.where(Post.author_id == author_id)
+        query = query.where(Post.user_id == author_id)
     
     # Count
     count_query = select(func.count()).select_from(query.subquery())
@@ -225,10 +225,10 @@ async def list_posts(
                 "like_count": p.like_count,
                 "comment_count": p.comment_count,
                 "author": {
-                    "id": p.author.id,
-                    "username": p.author.username,
-                    "nickname": p.author.nickname,
-                } if p.author else None,
+                    "id": p.user.id,
+                    "username": p.user.username,
+                    "nickname": p.user.nickname,
+                } if p.user else None,
                 "category": {
                     "id": p.category.id,
                     "name": p.category.name,
@@ -493,7 +493,7 @@ async def list_tags(
     _: User = Depends(require_admin),
 ):
     """List all tags."""
-    query = select(Tag).order_by(Tag.post_count.desc())
+    query = select(Tag).order_by(Tag.created_at.desc())
     
     if search:
         query = query.where(Tag.name.ilike(f"%{search}%"))
