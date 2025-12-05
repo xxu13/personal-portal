@@ -1,0 +1,39 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+.commentForm {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.compact {
+  .inputWrapper {
+    width: 100%;
+  }
+}
+
+.avatar {
+  flex-shrink: 0;
+}
+
+.inputWrapper {
+  flex: 1;
+}
+
+.textarea {
+  background: var(--bg-tertiary) !important;
+  border-color: var(--border-primary) !important;
+  resize: none;
+  
+  &:focus {
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
+  }
+}
+
+.actions {
+  @include flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+

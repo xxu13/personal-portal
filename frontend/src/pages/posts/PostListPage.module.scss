@@ -1,0 +1,74 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+.pageContainer {
+  padding: var(--space-8) 0;
+}
+
+.container {
+  display: flex;
+  gap: var(--space-8);
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar {
+  display: none;
+  
+  @include lg {
+    display: block;
+    width: 300px;
+    flex-shrink: 0;
+  }
+}
+
+.header {
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 300px;
+  
+  :global(.ant-input-affix-wrapper) {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-primary) !important;
+  }
+}
+
+.postsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  
+  @include sm {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.pagination {
+  @include flex-center;
+  margin-top: var(--space-10);
+}
+
+.loading {
+  @include flex-center;
+  min-height: 300px;
+}
+

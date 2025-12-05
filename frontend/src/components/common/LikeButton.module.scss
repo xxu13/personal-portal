@@ -1,0 +1,25 @@
+@import '../../styles/variables.scss';
+
+.likeButton {
+  @include flex-center;
+  gap: var(--space-1);
+  color: var(--text-tertiary) !important;
+  transition: all var(--transition-fast);
+  
+  &:hover {
+    color: var(--accent-secondary) !important;
+  }
+  
+  &.active {
+    color: var(--accent-secondary) !important;
+  }
+}
+
+.liked {
+  color: var(--accent-secondary);
+}
+
+.count {
+  font-size: var(--text-sm);
+}
+

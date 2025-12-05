@@ -1,0 +1,62 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+.managePage {
+  max-width: 1400px;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-6);
+}
+
+.filters {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.table {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  overflow: hidden;
+  
+  :global(.ant-table) {
+    background: transparent;
+  }
+  
+  :global(.ant-table-thead > tr > th) {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-primary);
+  }
+  
+  :global(.ant-table-tbody > tr > td) {
+    border-bottom: 1px solid var(--border-primary);
+  }
+  
+  :global(.ant-table-tbody > tr:hover > td) {
+    background: var(--bg-tertiary);
+  }
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-bottom: var(--space-4);
+}
+
+.form {
+  max-width: 600px;
+  
+  :global(.ant-form-item-label > label) {
+    color: var(--text-secondary);
+  }
+}
+

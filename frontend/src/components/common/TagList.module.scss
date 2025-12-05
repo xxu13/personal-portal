@@ -1,0 +1,33 @@
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tag {
+  color: var(--text-tertiary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  
+  &:hover {
+    color: var(--accent-tertiary);
+  }
+}
+
+.small {
+  .tag {
+    font-size: var(--text-xs);
+  }
+}
+
+.medium {
+  .tag {
+    font-size: var(--text-sm);
+  }
+}
+
+.more {
+  color: var(--text-tertiary);
+  font-size: inherit;
+}
+

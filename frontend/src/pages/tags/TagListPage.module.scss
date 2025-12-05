@@ -1,0 +1,53 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+.pageContainer {
+  padding: var(--space-8) 0;
+}
+
+.container {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-8);
+}
+
+.tagCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) !important;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  
+  &:hover {
+    color: var(--accent-tertiary);
+  }
+}
+
+.count {
+  font-size: 0.7em;
+  color: var(--text-tertiary);
+}
+
+.loading {
+  @include flex-center;
+  min-height: 50vh;
+}
+

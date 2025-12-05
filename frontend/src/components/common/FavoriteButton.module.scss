@@ -1,0 +1,21 @@
+@import '../../styles/variables.scss';
+
+.favoriteButton {
+  @include flex-center;
+  gap: var(--space-1);
+  color: var(--text-tertiary) !important;
+  transition: all var(--transition-fast);
+  
+  &:hover {
+    color: var(--accent-warning) !important;
+  }
+  
+  &.active {
+    color: var(--accent-warning) !important;
+  }
+}
+
+.favorited {
+  color: var(--accent-warning);
+}
+

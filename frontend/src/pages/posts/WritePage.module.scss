@@ -1,0 +1,56 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+.writePage {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+.header {
+  @include flex-between;
+  margin-bottom: var(--space-8);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form {
+  :global(.ant-form-item-label > label) {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  
+  :global(.ant-input),
+  :global(.ant-input-affix-wrapper),
+  :global(.ant-select-selector) {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-primary) !important;
+  }
+}
+
+.toggleRow {
+  @include flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  color: var(--text-secondary);
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metaItem {
+  margin-bottom: var(--space-4);
+}
+

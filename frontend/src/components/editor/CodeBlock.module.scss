@@ -1,0 +1,49 @@
+@import '../../styles/variables.scss';
+
+.codeBlockWrapper {
+  position: relative;
+  margin: var(--space-4) 0;
+  
+  pre {
+    margin: 0;
+    padding: var(--space-4);
+    padding-top: var(--space-10);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    overflow-x: auto;
+    
+    code {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+  }
+}
+
+.header {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 1;
+}
+
+.languageSelect {
+  min-width: 120px;
+  
+  :global(.ant-select-selector) {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-primary) !important;
+  }
+  
+  :global(.ant-select-selection-item) {
+    font-size: var(--text-xs);
+  }
+}
+
+.languageDropdown {
+  :global(.ant-select-item) {
+    font-size: var(--text-sm);
+  }
+}
+
