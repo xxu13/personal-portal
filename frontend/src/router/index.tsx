@@ -19,6 +19,9 @@ const FavoritesPage = lazy(() => import('../pages/user/FavoritesPage'));
 const MessagesPage = lazy(() => import('../pages/user/MessagesPage'));
 const NotificationsPage = lazy(() => import('../pages/user/NotificationsPage'));
 
+// AI pages
+const AIToolPage = lazy(() => import('../pages/ai/AIToolPage'));
+
 // Admin pages
 const AdminDashboard = lazy(() => import('../pages/admin/DashboardPage'));
 const AdminPosts = lazy(() => import('../pages/admin/PostManagePage'));
@@ -143,6 +146,10 @@ export const router = createBrowserRouter([
               {
                 path: 'notifications',
                 element: <NotificationsPage />,
+              },
+              {
+                path: 'ai',
+                element: <AIToolPage />,
               },
             ],
           },

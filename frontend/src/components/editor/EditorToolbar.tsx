@@ -10,9 +10,11 @@ import {
   LinkOutlined,
   PictureOutlined,
   MinusOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 
 import { uploadService } from '../../services/uploadService';
+import { useAIStore } from '../../stores/aiStore';
 import styles from './EditorToolbar.module.scss';
 
 interface EditorToolbarProps {
@@ -20,6 +22,15 @@ interface EditorToolbarProps {
 }
 
 const EditorToolbar = ({ editor }: EditorToolbarProps) => {
+  const openAIModal = useAIStore((state) => state.openModal);
+
+  const handleAIGenerate = () => {
+    openAIModal({
+      mode: 'text2image',
+      editorRef: editor,
+    });
+  };
+
   const handleImageUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -179,6 +190,14 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
             type="text"
             icon={<PictureOutlined />}
             onClick={handleImageUpload}
+          />
+        </Tooltip>
+        <Tooltip title="AI Generate Image">
+          <Button
+            type="text"
+            icon={<RobotOutlined />}
+            onClick={handleAIGenerate}
+            style={{ color: '#6366f1' }}
           />
         </Tooltip>
       </div>

@@ -4,6 +4,8 @@ import { Spin } from 'antd';
 
 import Header from './Header';
 import Footer from './Footer';
+import AIToolModal from '../common/AIToolModal';
+import AIFloatingButton from '../common/AIFloatingButton';
 import styles from './MainLayout.module.scss';
 
 const PageLoading = () => (
@@ -22,6 +24,10 @@ const MainLayout = () => {
         </Suspense>
       </main>
       <Footer />
+      
+      {/* AI Tool Components */}
+      <AIToolModal />
+      <AIFloatingButton />
     </div>
   );
 };

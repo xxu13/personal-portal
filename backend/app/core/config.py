@@ -75,6 +75,12 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "admin"
     ADMIN_EMAIL: str = "admin@example.com"
     ADMIN_PASSWORD: str = "admin123456"
+    
+    # AI Service (DashScope / 阿里云百炼)
+    DASHSCOPE_API_KEY: str = ""
+    DASHSCOPE_BASE_URL: str = "https://dashscope.aliyuncs.com/api/v1"
+    DASHSCOPE_TEXT2IMAGE_MODEL: str = "wanx-v1"
+    DASHSCOPE_CHAT_MODEL: str = "qwen-turbo"
 
 
 @lru_cache

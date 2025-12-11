@@ -37,3 +37,6 @@ python-magic==0.4.27
 python-dotenv==1.0.0
 python-slugify==8.0.1
 
+# AI Service (DashScope)
+httpx==0.27.0
+
