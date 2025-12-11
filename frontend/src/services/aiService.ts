@@ -158,14 +158,19 @@ export const aiService = {
     const token = getToken();
     const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api/v1';
     
+    // Build headers - only include Authorization if token exists
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     // Use fetch with streaming for SSE
     fetch(`${baseUrl}/ai/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-        'Accept': 'text/event-stream',
-      },
+      headers,
       body: JSON.stringify(data),
       signal: controller.signal,
     })
