@@ -11,6 +11,12 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.deps import close_redis
+from app.core.logging import setup_logging, get_logger, RequestLoggingMiddleware
+
+
+# Initialize logging before anything else
+setup_logging()
+logger = get_logger("main")
 
 
 @asynccontextmanager
@@ -20,14 +26,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     Manages startup and shutdown events.
     """
     # Startup
-    print(f"🚀 Starting {settings.PROJECT_NAME}...")
-    print(f"📚 API docs available at /docs")
-    print(f"🔧 Debug mode: {settings.DEBUG}")
+    logger.info(f"Starting {settings.PROJECT_NAME}...")
+    logger.info(f"API docs available at /docs")
+    logger.info(f"Debug mode: {settings.DEBUG}")
     
     yield
     
     # Shutdown
-    print(f"👋 Shutting down {settings.PROJECT_NAME}...")
+    logger.info(f"Shutting down {settings.PROJECT_NAME}...")
     await close_redis()
 
 
@@ -41,6 +47,9 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+
+# Add request logging middleware (must be added before CORS)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Configure CORS
 app.add_middleware(
@@ -63,6 +72,9 @@ app.mount(
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Handle all unhandled exceptions."""
+    # Log the exception
+    logger.exception(f"Unhandled exception for {request.method} {request.url.path}: {str(exc)}")
+    
     if settings.DEBUG:
         # In debug mode, return detailed error
         return JSONResponse(
@@ -106,4 +118,3 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 # WebSocket routes
 from app.websocket.handlers import websocket_endpoint
 app.websocket("/ws/notifications")(websocket_endpoint)
-

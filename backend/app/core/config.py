@@ -81,6 +81,16 @@ class Settings(BaseSettings):
     DASHSCOPE_BASE_URL: str = "https://dashscope.aliyuncs.com/api/v1"
     DASHSCOPE_TEXT2IMAGE_MODEL: str = "wanx-v1"
     DASHSCOPE_CHAT_MODEL: str = "qwen-turbo"
+    
+    # Logging
+    LOG_LEVEL: str = "INFO"
+    LOG_DIR: str = str(BACKEND_DIR / "logs")
+    LOG_FORMAT: str = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+    LOG_DATE_FORMAT: str = "%Y-%m-%d %H:%M:%S"
+    LOG_MAX_SIZE: int = 10 * 1024 * 1024  # 10MB
+    LOG_BACKUP_COUNT: int = 5
+    LOG_ACCESS_MAX_SIZE: int = 50 * 1024 * 1024  # 50MB
+    LOG_ACCESS_BACKUP_COUNT: int = 7
 
 
 @lru_cache
