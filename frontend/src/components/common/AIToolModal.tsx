@@ -45,7 +45,6 @@ const AIToolModal = () => {
 
   // Text-to-Image state
   const [prompt, setPrompt] = useState('');
-  const [negativePrompt, setNegativePrompt] = useState('');
   const [imageSize, setImageSize] = useState<ImageSize>('1024*1024');
   const [imageCount, setImageCount] = useState(1);
   const [generating, setGenerating] = useState(false);
@@ -105,7 +104,6 @@ const AIToolModal = () => {
       // Submit task
       const taskResponse = await aiService.submitText2Image({
         prompt: prompt.trim(),
-        negative_prompt: negativePrompt.trim() || undefined,
         size: imageSize,
         n: imageCount,
       });
