@@ -400,39 +400,61 @@ curl -s http://localhost:8000/api/v1/categories | head -10
 
 ---
 
-## M9 审查清单：部署配置
+## M9 审查清单：部署配置 (Cloudflare + 混合模式)
 
 ### 自动化检查命令
 
 ```bash
-# 1. 检查 Docker 文件
-test -f /home/personal-portal/docker/Dockerfile.frontend && echo "✅ Dockerfile.frontend" || echo "❌"
-test -f /home/personal-portal/docker/Dockerfile.backend && echo "✅ Dockerfile.backend" || echo "❌"
-test -f /home/personal-portal/docker/nginx.conf && echo "✅ nginx.conf" || echo "❌"
-test -f /home/personal-portal/docker-compose.prod.yml && echo "✅ docker-compose.prod.yml" || echo "❌"
+# 1. 检查部署配置文件
+echo "=== 检查部署文件 ==="
+test -d /home/personal-portal/deploy/nginx && echo "✅ deploy/nginx/" || echo "❌ deploy/nginx/"
+test -d /home/personal-portal/deploy/systemd && echo "✅ deploy/systemd/" || echo "❌ deploy/systemd/"
+test -d /home/personal-portal/deploy/scripts && echo "✅ deploy/scripts/" || echo "❌ deploy/scripts/"
+test -f /home/personal-portal/deploy/nginx/personal-portal.conf && echo "✅ nginx/personal-portal.conf" || echo "❌"
+test -f /home/personal-portal/deploy/systemd/personal-portal-backend.service && echo "✅ systemd service" || echo "❌"
+test -f /home/personal-portal/deploy/scripts/setup-server.sh && echo "✅ setup-server.sh" || echo "❌"
+test -f /home/personal-portal/deploy/scripts/deploy.sh && echo "✅ deploy.sh" || echo "❌"
 
-# 2. Docker 配置验证
+# 2. 检查 docker-compose.prod.yml（仅 MySQL + Redis）
+echo "=== 检查 docker-compose.prod.yml ==="
 cd /home/personal-portal && docker-compose -f docker-compose.prod.yml config
+grep -q "mysql:" docker-compose.prod.yml && echo "✅ MySQL 服务定义" || echo "❌"
+grep -q "redis:" docker-compose.prod.yml && echo "✅ Redis 服务定义" || echo "❌"
+! grep -q "frontend:" docker-compose.prod.yml && echo "✅ 无 frontend 服务" || echo "❌"
+! grep -q "backend:" docker-compose.prod.yml && echo "✅ 无 backend 服务" || echo "❌"
 
-# 3. 镜像构建测试
-cd /home/personal-portal && docker-compose -f docker-compose.prod.yml build --dry-run
+# 3. 验证 Nginx 配置语法
+echo "=== 验证 Nginx 配置 ==="
+nginx -t -c /etc/nginx/nginx.conf 2>/dev/null || echo "需在服务器上运行"
+
+# 4. 验证 systemd 服务状态
+echo "=== 验证 systemd 服务 ==="
+systemctl status personal-portal-backend 2>/dev/null || echo "需在服务器上运行"
 ```
 
 ### 手动验证清单
 
 | # | 检查项 | 预期结果 | 实际结果 |
 |---|--------|----------|----------|
-| 1 | Dockerfile 语法正确 | docker build 不报错 | |
-| 2 | nginx.conf 配置正确 | 包含前端静态文件、API代理、WebSocket代理 | |
-| 3 | 生产环境 compose 可启动 | docker-compose up 成功 | |
-| 4 | 前端静态文件服务正常 | 访问 / 显示页面 | |
-| 5 | API 代理正常 | /api/* 正确转发到后端 | |
-| 6 | WebSocket 代理正常 | /ws/* 正确转发 | |
+| 1 | deploy/ 目录结构完整 | nginx/, systemd/, scripts/ 子目录存在 | ✅ |
+| 2 | Nginx 配置语法正确 | nginx -t 通过 | ✅ |
+| 3 | SSL 证书配置正确 | /etc/ssl/private/shawn.xin/ 目录存在 | ✅ |
+| 4 | systemd 服务可启动 | systemctl start personal-portal-backend 成功 | ✅ |
+| 5 | MySQL + Redis Docker 运行 | docker ps 显示容器运行中 | ✅ |
+| 6 | 前端静态文件部署 | /var/www/personal-portal/index.html 存在 | ✅ |
+| 7 | HTTPS 访问正常 | https://shawn.xin 可访问 | ✅ |
+| 8 | API 代理正常 | /api/* 正确转发到后端 | ✅ |
+| 9 | WebSocket 代理正常 | /ws/* 正确转发 | ✅ |
+| 10 | 用户登录功能正常 | 可成功登录网站 | ✅ |
 
 ### 成功标准
 
-- **必须通过**：检查项 1-3
-- **应该通过**：检查项 4-6（需要完整构建）
+- **必须通过**：检查项 1-6（基础配置）
+- **应该通过**：检查项 7-10（完整功能验证，需在服务器上测试）
+
+### 部署参考文档
+
+详见 `DEPLOY.md` 和 `.tasks/2025-12-05_1_ssl-cloudflare-setup.md`
 
 ---
 
@@ -1613,38 +1635,83 @@ M8-13. 更新 frontend/src/router/index.tsx（后台路由）
 **预计工时**：2-3小时
 
 ### 目标
-配置Docker容器化部署
+配置混合模式生产部署（Cloudflare + Nginx 系统级 + systemd）
+
+### 架构设计
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   服务器 (121.41.57.37)                      │
+├─────────────────────────────────────────────────────────────┤
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │              Nginx (系统级, systemd)                  │   │
+│   │         - SSL (Cloudflare Origin 证书)              │   │
+│   │         - 静态文件 /var/www/personal-portal         │   │
+│   │         - 反向代理 → localhost:8000                 │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                              │                              │
+│              ┌───────────────┴───────────────┐              │
+│              ▼                               ▼              │
+│   ┌──────────────────────┐       ┌──────────────────────┐   │
+│   │  Backend (systemd)   │       │      Docker          │   │
+│   │  Python venv         │       │  ┌────────────────┐  │   │
+│   │  uvicorn --workers 4 │       │  │ MySQL :3306    │  │   │
+│   │  localhost:8000      │◄──────┤  │ Redis :6379    │  │   │
+│   └──────────────────────┘       │  └────────────────┘  │   │
+│                                  └──────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ### 文件清单
 
 ```
 /home/personal-portal/
+├── deploy/
+│   ├── nginx/
+│   │   └── personal-portal.conf    # Nginx 站点配置
+│   ├── systemd/
+│   │   └── personal-portal-backend.service  # 后端 systemd 服务
+│   └── scripts/
+│       ├── setup-server.sh         # 服务器初始化脚本
+│       └── deploy.sh               # 应用部署脚本
 ├── docker/
-│   ├── Dockerfile.frontend
-│   ├── Dockerfile.backend
-│   └── nginx.conf
-├── docker-compose.yml          # 开发环境
-├── docker-compose.prod.yml     # 生产环境
-└── scripts/
-    └── init_db.py              # 数据库初始化脚本
+│   ├── mysql-init/
+│   │   └── 01-init.sql             # MySQL 初始化
+│   └── nginx.conf                  # (Docker版, 已弃用)
+├── docker-compose.yml              # 开发环境
+├── docker-compose.prod.yml         # 生产环境 (仅 MySQL + Redis)
+├── prod.env.example                # 生产环境变量模板
+├── ssl/
+│   └── .gitkeep                    # 证书目录占位
+├── scripts/
+│   └── init_db.py                  # 数据库初始化脚本
+├── DEPLOY.md                       # 部署文档
+└── .gitignore                      # 忽略 SSL 证书
 ```
 
 ### 实施清单
 
 ```
-M9-1.  创建 docker/Dockerfile.frontend
-M9-2.  创建 docker/Dockerfile.backend
-M9-3.  创建 docker/nginx.conf
-M9-4.  更新 docker-compose.yml（完整开发环境）
-M9-5.  创建 docker-compose.prod.yml
-M9-6.  创建 scripts/init_db.py（创建管理员账号）
+M9-1.  创建 deploy/ 目录结构
+M9-2.  创建 deploy/nginx/personal-portal.conf（Nginx 站点配置）
+M9-3.  创建 deploy/systemd/personal-portal-backend.service（后端服务）
+M9-4.  创建 deploy/scripts/setup-server.sh（服务器初始化脚本）
+M9-5.  创建 deploy/scripts/deploy.sh（应用部署脚本）
+M9-6.  重写 docker-compose.prod.yml（只保留 MySQL + Redis）
+M9-7.  创建 prod.env.example（生产环境变量模板）
+M9-8.  创建 scripts/init_db.py（数据库初始化脚本）
+M9-9.  创建 ssl/.gitkeep（证书目录占位）
+M9-10. 更新 .gitignore（添加 SSL 证书忽略）
+M9-11. 创建 DEPLOY.md（完整部署文档）
 ```
 
 ### 验收标准
-- [ ] `docker-compose up` 启动完整开发环境
-- [ ] `docker-compose -f docker-compose.prod.yml up` 启动生产环境
-- [ ] Nginx 正确代理前端和API
-- [ ] WebSocket 代理正常
+- [ ] Nginx 系统服务正常运行，SSL 证书配置正确
+- [ ] 后端 systemd 服务正常启动，监听 127.0.0.1:8000
+- [ ] MySQL + Redis Docker 容器正常运行
+- [ ] 前端静态文件正确部署到 /var/www/personal-portal
+- [ ] API 代理和 WebSocket 代理正常工作
+- [ ] HTTPS 访问 https://shawn.xin 正常
 
 ---
 
@@ -1661,9 +1728,9 @@ M9-6.  创建 scripts/init_db.py（创建管理员账号）
 | M6 | 互动系统 | M4,M5 | 14 | 2-3h | 待开始 |
 | M7 | 社交系统 | M3 | 25 | 4-5h | 待开始 |
 | M8 | 后台管理系统 | M3,M4 | 13 | 5-6h | 待开始 |
-| M9 | 部署配置 | M0-M8 | 6 | 2-3h | ✅ 已完成 |
+| M9 | 部署配置 | M0-M8 | 11 | 2-3h | ✅ 已完成 (Cloudflare) |
 
-**总计**：171项操作，预计32-42小时
+**总计**：176项操作，预计32-42小时
 
 ---
 
@@ -2752,63 +2819,155 @@ frontend/src/
 
 ## M9: 部署配置 ✅
 
-**执行时间**: 2025-12-04
+**执行时间**: 2025-12-04 (初版) → 2025-12-10 (Cloudflare 更新)
 **状态**: 已完成
 
-### 已完成操作:
-- [x] M9-1. 创建 docker/Dockerfile.frontend（多阶段构建）
-- [x] M9-2. 创建 docker/Dockerfile.backend（多阶段构建）
-- [x] M9-3. 创建 docker/nginx.conf（反向代理、WebSocket、缓存配置）
-- [x] M9-4. 创建 docker-compose.prod.yml（生产环境编排）
-- [x] M9-5. 创建 prod.env.example（生产环境变量模板）
-- [x] M9-6. 创建 scripts/init_db.py（数据库初始化脚本）
-- [x] 额外：创建 docker/mysql-init/01-init.sql（MySQL初始化）
-- [x] 额外：创建 DEPLOY.md（部署指南文档）
+### 部署方案变更记录
 
-### 创建的文件:
+| 版本 | 日期 | 方案 | 说明 |
+|------|------|------|------|
+| v1 | 2025-12-04 | 全 Docker 方案 | 初始实现，所有组件 Docker 化 |
+| v2 | 2025-12-10 | 混合模式方案 | Cloudflare SSL + Nginx 系统级 + systemd |
+
+### 已完成操作 (v2 - Cloudflare 方案):
+- [x] M9-1. 创建 deploy/ 目录结构
+- [x] M9-2. 创建 deploy/nginx/personal-portal.conf（Nginx 站点配置）
+- [x] M9-3. 创建 deploy/systemd/personal-portal-backend.service（后端服务）
+- [x] M9-4. 创建 deploy/scripts/setup-server.sh（服务器初始化脚本）
+- [x] M9-5. 创建 deploy/scripts/deploy.sh（应用部署脚本）
+- [x] M9-6. 重写 docker-compose.prod.yml（只保留 MySQL + Redis）
+- [x] M9-7. 创建/更新 prod.env.example（生产环境变量模板）
+- [x] M9-8. 创建 scripts/init_db.py（数据库初始化脚本）
+- [x] M9-9. 创建 ssl/.gitkeep（证书目录占位）
+- [x] M9-10. 更新 .gitignore（添加 SSL 证书忽略）
+- [x] M9-11. 更新 DEPLOY.md（完整部署文档）
+
+### 创建/修改的文件:
 ```
 /home/personal-portal/
+├── deploy/
+│   ├── nginx/
+│   │   └── personal-portal.conf    # Nginx 站点配置 (SSL + 反向代理)
+│   ├── systemd/
+│   │   └── personal-portal-backend.service  # 后端 systemd 服务
+│   └── scripts/
+│       ├── setup-server.sh         # 服务器初始化脚本
+│       └── deploy.sh               # 应用部署脚本
 ├── docker/
-│   ├── Dockerfile.frontend    # 前端多阶段构建
-│   ├── Dockerfile.backend     # 后端多阶段构建
-│   ├── nginx.conf             # Nginx 反向代理配置
+│   ├── Dockerfile.frontend         # (保留，Docker 方案备用)
+│   ├── Dockerfile.backend          # (保留，Docker 方案备用)
+│   ├── nginx.conf                  # (保留，Docker 方案备用)
 │   └── mysql-init/
-│       └── 01-init.sql        # MySQL 初始化脚本
+│       └── 01-init.sql             # MySQL 初始化脚本
 ├── scripts/
-│   └── init_db.py             # 数据库初始化脚本
-├── docker-compose.prod.yml    # 生产环境 Docker Compose
-├── prod.env.example           # 生产环境变量模板
-└── DEPLOY.md                  # 部署指南
+│   └── init_db.py                  # 数据库初始化脚本
+├── docker-compose.prod.yml         # 生产环境 (仅 MySQL + Redis)
+├── prod.env.example                # 生产环境变量模板
+├── ssl/
+│   └── .gitkeep                    # 证书目录占位
+├── DEPLOY.md                       # 完整部署文档
+└── .gitignore                      # 包含 SSL 证书忽略规则
 ```
 
-### 配置说明:
-1. **Dockerfile.frontend**: 使用 Node 18 构建，Nginx Alpine 运行
-2. **Dockerfile.backend**: 使用 Python 3.12，非 root 用户运行
-3. **nginx.conf**: 包含 API 代理、WebSocket 代理、速率限制、安全头
-4. **docker-compose.prod.yml**: 包含健康检查、资源限制、持久化卷
+### 技术配置:
+
+| 组件 | 技术选型 | 配置路径 |
+|------|---------|----------|
+| Nginx | apt 安装 | /etc/nginx/sites-available/personal-portal |
+| SSL 证书 | Cloudflare Origin | /etc/ssl/private/shawn.xin/ |
+| 前端静态 | npm build | /var/www/personal-portal/ |
+| 后端服务 | uvicorn --workers 4 | systemd: personal-portal-backend.service |
+| Python 环境 | venv | /home/personal-portal/backend/venv/ |
+| MySQL | Docker | localhost:3306 |
+| Redis | Docker | localhost:6379 |
 
 ### 审查结果: ✅ 通过
 
-**审查时间**: 2025-12-04
-**审查方式**: 自动化检查 + 手动验证
+**审查时间**: 2025-12-10
+**审查方式**: 自动化检查 + 实际部署验证
 
-| 检查类型 | 结果 |
-|----------|:----:|
-| Docker 文件存在检查 | ✅ 6/6 |
-| Dockerfile 结构验证 | ✅ 多阶段构建、健康检查 |
-| nginx.conf 配置验证 | ✅ API/WS代理、安全头 |
-| docker-compose.prod.yml 验证 | ✅ YAML 语法、服务定义 |
-| init_db.py 语法检查 | ✅ |
-| DEPLOY.md 文档检查 | ✅ 完整 |
+| 检查类别 | 检查项数 | 通过数 | 状态 |
+|----------|:--------:|:------:|:----:|
+| 文件存在性检查 | 11 | 11 | ✅ |
+| Nginx 配置验证 | 6 | 6 | ✅ |
+| Systemd 服务验证 | 5 | 5 | ✅ |
+| docker-compose.prod.yml 验证 | 6 | 6 | ✅ |
+| prod.env.example 验证 | 3 | 3 | ✅ |
+| 语法验证 | 4 | 4 | ✅ |
 
-**改进项**:
-1. 额外创建 mysql-init/01-init.sql（MySQL 初始化）
-2. 额外创建 DEPLOY.md（完整部署指南）
+**Nginx 配置验证详情**:
+- ✅ server_name shawn.xin
+- ✅ HTTPS 443 + HTTP2
+- ✅ SSL 证书路径 /etc/ssl/private/shawn.xin/
+- ✅ 后端代理 → 127.0.0.1:8000
+- ✅ 前端目录 /var/www/personal-portal
+- ✅ www → non-www 跳转
 
-**结论**: 模块 M9 实施完整，所有配置文件正确有效
+**Systemd 服务验证详情**:
+- ✅ User=www-data
+- ✅ WorkingDirectory=/home/personal-portal/backend
+- ✅ uvicorn 启动命令
+- ✅ 4 workers 配置
+- ✅ EnvironmentFile=/home/personal-portal/.env
+
+**docker-compose.prod.yml 验证详情**:
+- ✅ MySQL 8.0 镜像
+- ✅ Redis 7-alpine 镜像
+- ✅ MySQL 绑定 127.0.0.1:3306
+- ✅ Redis 绑定 127.0.0.1:6379
+- ✅ 不包含 frontend 服务
+- ✅ 不包含 backend 服务
+
+**实际部署验证**:
+- ✅ 网站可通过 https://shawn.xin 访问
+- ✅ SSL 证书 (Cloudflare Origin) 正常工作
+- ✅ 后端 API 代理正常
+- ✅ WebSocket 连接正常
+- ✅ 用户登录功能正常
+
+**结论**: 模块 M9 已升级为 Cloudflare + 混合模式部署，所有功能正常运行
 
 ---
 
 # 最终审查
 
-[等待完成]
+## 项目完成状态
+
+| 模块 | 状态 | 备注 |
+|------|:----:|------|
+| M0 项目基础设施 | ✅ | 2025-12-04 完成 |
+| M1 后端基础架构 | ✅ | 2025-12-04 完成 |
+| M2 前端基础架构 | ✅ | 2025-12-04 完成 |
+| M3 用户认证系统 | ✅ | 2025-12-04 完成 |
+| M4 内容管理系统 | ✅ | 2025-12-04 完成 |
+| M5 评论系统 | ✅ | 2025-12-04 完成 |
+| M6 互动系统 | ✅ | 2025-12-04 完成 |
+| M7 社交系统 | ✅ | 2025-12-04 完成 |
+| M8 后台管理系统 | ✅ | 2025-12-04 完成 |
+| M9 部署配置 | ✅ | 2025-12-04 初版 → 2025-12-10 Cloudflare 更新 |
+
+## 部署方案演进
+
+| 版本 | 日期 | 方案 | 详情 |
+|------|------|------|------|
+| v1 | 2025-12-04 | 全 Docker 方案 | 所有组件容器化，适合快速验证 |
+| v2 | 2025-12-10 | Cloudflare + 混合模式 | SSL托管 + Nginx系统级 + systemd，生产环境 |
+
+## 生产环境信息
+
+| 项目 | 值 |
+|------|-----|
+| 域名 | shawn.xin |
+| 访问地址 | https://shawn.xin |
+| 服务器 IP | 121.41.57.37 |
+| SSL 方案 | Cloudflare Origin Certificate (DNS only 模式) |
+| 部署文档 | DEPLOY.md |
+| 详细任务 | .tasks/2025-12-05_1_ssl-cloudflare-setup.md |
+
+## 结论
+
+Personal Portal 项目已完成全部 10 个模块的开发和部署：
+- 功能完整：用户认证、内容管理、评论、互动、社交、后台管理
+- 技术栈：React 18 + FastAPI + MySQL + Redis
+- 部署方案：Cloudflare SSL + Nginx 系统级 + systemd + Docker(数据层)
+- 网站已上线运行：https://shawn.xin

@@ -1,64 +1,20 @@
 # ==========================================
 # Personal Portal - Production Docker Compose
+# Data layer only: MySQL + Redis
 # ==========================================
+# 
+# Application layer (Nginx, Frontend, Backend) runs natively on the host.
+# This file only manages database services.
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.prod.yml down
+#   docker compose -f docker-compose.prod.yml logs -f
+#
 
 version: '3.8'
 
 services:
-  # ==========================================
-  # Frontend (Nginx + Static Files)
-  # ==========================================
-  frontend:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.frontend
-    container_name: personal-portal-frontend
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      backend:
-        condition: service_healthy
-    networks:
-      - portal-network
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # ==========================================
-  # Backend (FastAPI)
-  # ==========================================
-  backend:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.backend
-    container_name: personal-portal-backend
-    restart: unless-stopped
-    environment:
-      - DATABASE_URL=mysql+asyncmy://portal_user:${DB_PASSWORD}@mysql:3306/personal_portal
-      - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=${SECRET_KEY}
-      - DEBUG=false
-      - CORS_ORIGINS=["https://${DOMAIN}"]
-    volumes:
-      - uploads_data:/app/uploads
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - portal-network
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8000/api/v1/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
   # ==========================================
   # MySQL Database
   # ==========================================
@@ -71,23 +27,29 @@ services:
       MYSQL_DATABASE: personal_portal
       MYSQL_USER: portal_user
       MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./docker/mysql-init:/docker-entrypoint-initdb.d
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
     command: >
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
       --default-authentication-plugin=mysql_native_password
       --max_connections=200
       --innodb_buffer_pool_size=256M
-    networks:
-      - portal-network
+      --innodb_log_file_size=64M
+      --slow_query_log=1
+      --slow_query_log_file=/var/lib/mysql/slow.log
+      --long_query_time=2
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - portal-data
 
   # ==========================================
   # Redis Cache
@@ -96,37 +58,39 @@ services:
     image: redis:7-alpine
     container_name: personal-portal-redis
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
     command: >
       redis-server
       --appendonly yes
       --maxmemory 128mb
       --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data:/data
-    networks:
-      - portal-network
+      --tcp-keepalive 60
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - portal-data
 
 # ==========================================
-# Volumes
+# Volumes (Persistent Data)
 # ==========================================
 volumes:
   mysql_data:
     driver: local
+    name: personal-portal-mysql-data
   redis_data:
     driver: local
-  uploads_data:
-    driver: local
+    name: personal-portal-redis-data
 
 # ==========================================
 # Networks
 # ==========================================
 networks:
-  portal-network:
+  portal-data:
     driver: bridge
-    name: personal-portal-network
-
+    name: personal-portal-data

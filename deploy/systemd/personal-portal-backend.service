@@ -1,0 +1,72 @@
+# ==========================================
+# Personal Portal - Backend Service
+# Systemd unit file for FastAPI application
+# ==========================================
+#
+# Installation:
+#   sudo cp personal-portal-backend.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable personal-portal-backend
+#   sudo systemctl start personal-portal-backend
+#
+# Logs:
+#   sudo journalctl -u personal-portal-backend -f
+#
+
+[Unit]
+Description=Personal Portal Backend (FastAPI)
+Documentation=https://github.com/your-username/personal-portal
+After=network.target docker.service
+Wants=docker.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/home/personal-portal/backend
+
+# Python virtual environment
+Environment="PATH=/home/personal-portal/backend/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Load environment variables from file
+EnvironmentFile=/home/personal-portal/.env
+
+# Start command: uvicorn with multiple workers
+ExecStart=/home/personal-portal/backend/venv/bin/uvicorn \
+    app.main:app \
+    --host 127.0.0.1 \
+    --port 8000 \
+    --workers 4 \
+    --access-log \
+    --log-level info
+
+# Restart policy
+Restart=always
+RestartSec=5
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/personal-portal/backend/uploads
+ReadWritePaths=/tmp
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Timeout settings
+TimeoutStartSec=30
+TimeoutStopSec=30
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=personal-portal-backend
+
+[Install]
+WantedBy=multi-user.target
+

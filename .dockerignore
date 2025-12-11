@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules
+frontend/node_modules
+backend/__pycache__
+backend/.venv
+**/__pycache__
+**/*.pyc
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Build outputs
+frontend/dist
+frontend/build
+*.egg-info
+
+# Docker
+.docker
+
+# Environment files
+.env
+*.env.local
+
+# Logs
+*.log
+logs/
+
+# Tests
+.pytest_cache
+.coverage
+htmlcov/
+
+# Documentation
+*.md
+docs/
+
+# Tasks
+.tasks/
+
+# SSL certificates (will be mounted as volume)
+ssl/*.pem
+ssl/*.crt
+ssl/*.key
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploads (will be mounted as volume)
+uploads/
+
+
+
+

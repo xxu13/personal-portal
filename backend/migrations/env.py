@@ -29,7 +29,9 @@ from app.models.notification import Notification
 config = context.config
 
 # Set the database URL from settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Escape % characters for ConfigParser interpolation
+db_url = settings.DATABASE_URL.replace("%", "%%")
+config.set_main_option("sqlalchemy.url", db_url)
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:

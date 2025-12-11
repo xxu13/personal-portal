@@ -68,3 +68,9 @@ temp/
 # Task files (optional, remove if you want to track)
 # .tasks/
 
+# SSL Certificates
+ssl/*.pem
+ssl/*.key
+ssl/*.crt
+!ssl/.gitkeep
+

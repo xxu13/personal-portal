@@ -8,16 +8,27 @@ from typing import List
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Get the backend directory path
+# Get paths
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
-ENV_FILE = BACKEND_DIR / ".env"
+PROJECT_DIR = BACKEND_DIR.parent
+
+# Look for .env in both locations (project root takes precedence)
+ENV_FILES = []
+if (PROJECT_DIR / ".env").exists():
+    ENV_FILES.append(str(PROJECT_DIR / ".env"))
+if (BACKEND_DIR / ".env").exists():
+    ENV_FILES.append(str(BACKEND_DIR / ".env"))
+
+# Default to backend/.env if nothing exists (for development)
+if not ENV_FILES:
+    ENV_FILES = [str(BACKEND_DIR / ".env")]
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     model_config = SettingsConfigDict(
-        env_file=str(ENV_FILE),
+        env_file=ENV_FILES,
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
