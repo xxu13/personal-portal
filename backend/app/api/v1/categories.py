@@ -74,3 +74,4 @@ async def get_category_by_slug(
         created_at=category.created_at,
     )
 
+

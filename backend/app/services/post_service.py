@@ -244,3 +244,4 @@ class PostService:
         await self.db.refresh(post)
         return post
 
+

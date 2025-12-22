@@ -144,3 +144,4 @@ async def get_unread_count(
     count = await message_service.get_unread_count(current_user.id)
     return UnreadCountResponse(count=count)
 
+

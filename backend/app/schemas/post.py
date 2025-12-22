@@ -123,3 +123,4 @@ class PostSearchParams(BaseModel):
     sort_by: str = Field(default="created_at", pattern=r"^(created_at|updated_at|view_count|like_count)$")
     sort_order: str = Field(default="desc", pattern=r"^(asc|desc)$")
 
+

@@ -117,3 +117,4 @@ async def cleanup_old_notifications(
     count = await notification_service.delete_old(current_user.id, days)
     return {"deleted": count}
 
+

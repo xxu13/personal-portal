@@ -134,3 +134,4 @@ class Message(Base):
     def __repr__(self) -> str:
         return f"<Message(id={self.id}, sender={self.sender_id})>"
 
+

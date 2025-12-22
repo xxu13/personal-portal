@@ -76,3 +76,4 @@ class NotificationSettings(BaseModel):
     mention: bool = True
     system: bool = True
 
+

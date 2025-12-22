@@ -81,3 +81,4 @@ class UnreadCountResponse(BaseModel):
     """Schema for unread message count."""
     count: int
 
+

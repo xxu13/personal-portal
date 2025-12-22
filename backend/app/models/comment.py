@@ -97,3 +97,4 @@ class Comment(Base):
     def __repr__(self) -> str:
         return f"<Comment(id={self.id}, post_id={self.post_id}, depth={self.depth})>"
 
+

@@ -67,3 +67,4 @@ async def websocket_endpoint(
     except Exception:
         manager.disconnect(websocket, user_id)
 
+

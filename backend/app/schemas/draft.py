@@ -37,3 +37,4 @@ class DraftResponse(DraftBase):
     
     model_config = {"from_attributes": True}
 
+

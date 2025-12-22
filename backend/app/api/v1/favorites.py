@@ -235,3 +235,4 @@ async def get_favorite_status(
         favorite_id=favorite.id if favorite else None,
     )
 
+

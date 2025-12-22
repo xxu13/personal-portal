@@ -48,3 +48,4 @@ const TagList = ({ tags, max, size = 'medium', clickable = true }: TagListProps)
 
 export default TagList;
 
+

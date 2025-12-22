@@ -117,3 +117,4 @@ class Favorite(Base):
     def __repr__(self) -> str:
         return f"<Favorite(id={self.id}, user_id={self.user_id}, post_id={self.post_id})>"
 
+

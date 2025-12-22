@@ -207,3 +207,4 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
 
 export default EditorToolbar;
 
+

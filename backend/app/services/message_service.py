@@ -224,3 +224,4 @@ class MessageService:
         )
         return count_result.scalar() or 0
 
+

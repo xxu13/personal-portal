@@ -88,3 +88,4 @@ class FavoriteListResponse(BaseModel):
     size: int
     pages: int
 
+

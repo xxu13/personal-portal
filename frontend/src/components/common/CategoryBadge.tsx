@@ -33,3 +33,4 @@ const CategoryBadge = ({ category, size = 'medium', clickable = true }: Category
 
 export default CategoryBadge;
 
+

@@ -77,3 +77,4 @@ class Category(Base):
         return len(self.posts) if self.posts else 0
 
 
+

@@ -565,3 +565,4 @@ async def delete_tag(
     await db.commit()
     return {"message": "Tag deleted"}
 
+
